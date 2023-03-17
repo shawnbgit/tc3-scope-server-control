@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{1547a54f-1c77-4203-b599-4a40a6d5fa50}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	bExternalTriggerEvent: BOOL := FALSE;
+    fbScopeServerControl: FB_ScopeServerControl;
+    eReqState: E_ScopeServerState := SCOPE_SERVER_IDLE;
+    bBusy: BOOL := FALSE;
+    bDone: BOOL := FALSE;
+    bError: BOOL := FALSE;
+    nErrorId: UDINT := 0;
+    fbTimer: TON;
+    bTriggerTimer: BOOL := FALSE;
+    nState: UDINT := 0;
+	fbStartExport : NT_StartProcess;
+	bStart: BOOL;	// start the export process to csv
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ScopeData.var1 := ScopeData.var1 +3;
+ScopeData.var2 := ScopeData.var2 +2;
+ScopeData.var3 := ScopeData.var3 +1;
+
+
+CASE nState OF
+0:
+    eReqState := SCOPE_SERVER_START;
+    nState := 10;
+10:
+    IF fbScopeServerControl.bDone AND bExternalTriggerEvent
+    THEN
+        bTriggerTimer := TRUE;
+        nState := 20;
+    END_IF
+20:
+    IF fbTimer.Q THEN
+        eReqState := SCOPE_SERVER_SAVE;
+        bTriggerTimer := FALSE;
+        nState := 30;
+    END_IF
+30:
+    IF fbScopeServerControl.bDone THEN
+        eReqState := SCOPE_SERVER_DISCONNECT;
+    END_IF
+END_CASE
+fbTimer(IN:=bTriggerTimer, PT:=t#10s);
+fbScopeServerControl( sNetId:= '169.254.30.5.1.1',													// AMS net id of the scope server host
+                      eReqState:= eReqState,														// scope server state
+                      sConfigFile:= 'C:\Users\Administrator\Desktop\scopetest\YT-Sample.tcscopex',	// config file taken from development PC after setting up scope
+                      sSaveFile:= 'C:\Users\Administrator\Desktop\scopetest\sample-1.svd',			// file you want to save the last sample cycle to
+                      tTimeout:= t#5s,
+                      bBusy=>bBusy,
+                      bDone=>bDone,
+                      bError=>bError,
+                      nErrorId=>nErrorId);
+					  
+fbStartExport(
+    NETID:= '169.254.30.5.1.1', 
+    PATHSTR:= 'C:\TwinCAT\Functions\TF3300-Scope-Server\TC3ScopeExportTool.exe', 
+    DIRNAME:= 'C:\TwinCAT\Functions\TF3300-Scope-Server', 
+    COMNDLINE:= '"svd=C:\Users\Administrator\Desktop\scopetest\sample-1.svd" target=C:\Users\Administrator\Desktop\scopetest\TestExport.csv silent', 
+    START:= bStart, 
+    TMOUT:= T#20S, 
+    BUSY=> , 
+    ERR=> , 
+    ERRID=> );					  
+					  ]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
