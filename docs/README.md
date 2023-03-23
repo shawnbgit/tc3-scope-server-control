@@ -1,4 +1,8 @@
-You will have to manually copy over the scope configuration file from your development PC once you are satisfied with the variable mappings, settings, etc. The configuration file will be in the solution folder of your TwinCAT project. 
+## Walkthrough of the initial scope configuration for an application using the Scope Server on a headless IPC. Secondary walkthrough of how to programatically use the export tool to create a CSV file from your recorded data. 
+
+
+
+Manually copy over the scope configuration file from your development PC once you are satisfied with the variable mappings, settings, etc. The configuration file will be in the solution folder of your TwinCAT project. 
 
 ![image-20230321134331976](Scope-PLC-Control.assets/image-20230321134331976.png)
 
